@@ -13,5 +13,6 @@ UCLASS()
 class MYWUXIA_API AMyWuxiaGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+public:
+	AMyWuxiaGameModeBase();
 };
