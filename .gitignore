@@ -1,0 +1,22 @@
+# UE 项目自动生成目录
+Saved/
+Intermediate/
+Binaries/
+DerivedDataCache/
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+
+# 不需要跟踪的文件
+*.log
+*.aps
+*.pdb
+*.VC.db
+*.opendb
+
+# 特定平台的中间文件
+Build/
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
