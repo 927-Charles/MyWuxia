@@ -18,6 +18,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
 
 	//相机
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Camera")
@@ -28,9 +29,17 @@ protected:
 	//攻击碰撞体检测
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Combat")
 		class UBoxComponent* AttackCollision;
+	// 攻击动画蒙太奇
+	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite,Category = "Combat")
+		class UAnimMontage* AttackMontage;
+	// 是否正在攻击（用于锁定转向）
+	UPROPERTY(BlueprintReadWrite, Category = "Combat")
+		bool bIsAttacking = false;
+
 	void MoveForward(float Value);
 	void MoveLeft(float Value);
 	void PrimaryAttack();
+	void PlayAttackAnimation();
 
 public:	
 	// Called every frame
