@@ -16,6 +16,9 @@
 #include "Animation/AnimMontage.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Animation/AnimInstance.h"
+#include "TimerManager.h"    // 必须包含
+#include "Engine/World.h"    // 确保能正确获取 World
+
 
 // Sets default values
 ATopDownCharacter::ATopDownCharacter()
@@ -94,6 +97,40 @@ void ATopDownCharacter::PlayAttackAnimation()
 	}
 }
 
+void ATopDownCharacter::Dash()
+{
+	if (!bCanDash)return;
+	if (APlayerController* PC = Cast<APlayerController>(GetController())) {
+		FHitResult HitResult;
+		PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+		if (HitResult.bBlockingHit) {
+			FVector CurrentLocation = GetActorLocation();
+			FVector TargetDirection_temp = (HitResult.Location - CurrentLocation);
+			TargetDirection_temp.Z = 0;
+			FVector TargetDirection = TargetDirection_temp.GetSafeNormal();
+			FVector DashDestination = CurrentLocation + TargetDirection * DashDistance;
+			UE_LOG(LogTemp, Error, TEXT("TargetDirection = %s"), *DashDestination.ToString());
+
+			// 碰撞检测移动
+			FHitResult SweepResult;
+			bool bMoved = SetActorLocation(DashDestination, true, &SweepResult);
+			if (!bMoved&&SweepResult.bBlockingHit) {
+				DashDestination = CurrentLocation + TargetDirection * (DashDistance * SweepResult.Time);
+				SetActorLocation(DashDestination, false);
+			}
+			// 冷却
+			bCanDash = false;
+			GetWorldTimerManager().SetTimer(
+				DashCooldownTimerHandle,
+				[this]() { bCanDash = true; },
+				DashCooldown,
+				false
+			);
+
+		}
+	}
+}
+
 // Called every frame
 void ATopDownCharacter::Tick(float DeltaTime)
 {
@@ -124,8 +161,11 @@ void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// 绑定轴输入
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATopDownCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveLeft", this, &ATopDownCharacter::MoveLeft);
+	
 
 	// 绑定动作输入
 	PlayerInputComponent->BindAction("PrimaryAttack", EInputEvent::IE_Pressed, this, &ATopDownCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("Dash", EInputEvent::IE_Pressed, this, &ATopDownCharacter::Dash);
+
 }
 

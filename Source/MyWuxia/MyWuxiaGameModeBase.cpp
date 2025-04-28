@@ -14,10 +14,7 @@ AMyWuxiaGameModeBase::AMyWuxiaGameModeBase() {
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 	else {
-		// 后备方案：使用C++类（需确保存在）
 		DefaultPawnClass = ATopDownCharacter::StaticClass();
 	}
 	PlayerControllerClass = ACombatPlayerController::StaticClass(); // 自定义PlayerController
-
-
 }

@@ -18,8 +18,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
-
 	//相机
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Camera")
 		class UCameraComponent* CameraComponent;
@@ -35,11 +33,19 @@ protected:
 	// 是否正在攻击（用于锁定转向）
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 		bool bIsAttacking = false;
+	UPROPERTY(EditAnyWhere, Category = "Dash")
+		float DashDistance = 1000.0f;
+	UPROPERTY(EditAnyWhere, Category = "Dash")
+		float DashCooldown = 1.f;
+
+	bool bCanDash = true;
+
 
 	void MoveForward(float Value);
 	void MoveLeft(float Value);
 	void PrimaryAttack();
 	void PlayAttackAnimation();
+	void Dash();
 
 public:	
 	// Called every frame
@@ -47,5 +53,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+private:
+	// 闪现冷却定时器句柄
+	FTimerHandle DashCooldownTimerHandle;
 };
