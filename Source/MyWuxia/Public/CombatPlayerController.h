@@ -13,6 +13,15 @@ UCLASS()
 class MYWUXIA_API ACombatPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	ACombatPlayerController();
 protected:
 	virtual void BeginPlay() override;
+	// HUD 控件类（在蓝图中赋值）
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+		TSubclassOf<class UUserWidget> HUDWidgetClass;
+
+	UPROPERTY()
+		UUserWidget* HUDWidget;
 };
