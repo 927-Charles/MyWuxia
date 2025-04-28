@@ -27,9 +27,12 @@ protected:
 	//攻击碰撞体检测
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Combat")
 		class UBoxComponent* AttackCollision;
-	// 攻击动画蒙太奇
+	// 普通攻击动画蒙太奇
 	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite,Category = "Combat")
 		class UAnimMontage* AttackMontage;
+	// 特殊攻击动画蒙太奇
+	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite, Category = "Combat")
+		class UAnimMontage* AttackMontage2;
 	// 是否正在攻击（用于锁定转向）
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 		bool bIsAttacking = false;
@@ -37,16 +40,24 @@ protected:
 		float DashDistance = 1000.0f;
 	UPROPERTY(EditAnyWhere, Category = "Dash")
 		float DashCooldown = 1.f;
+	// 火球生成参数
+	UPROPERTY(BlueprintReadWrite, Category = "Combat")
+		TSubclassOf<class AFireBall> FireBallClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+		float FireBallSpawnOffset = 100.0f; // 生成点偏移距离
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+		float FireBallSpeed = 600.0f; // 火球飞行速度
+
 
 	bool bCanDash = true;
-
 
 	void MoveForward(float Value);
 	void MoveLeft(float Value);
 	void PrimaryAttack();
 	void PlayAttackAnimation();
+	void PlayAttackAnimation2();
 	void Dash();
-
+	void SpecialAttack();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

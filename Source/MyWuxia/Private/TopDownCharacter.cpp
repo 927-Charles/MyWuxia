@@ -18,7 +18,7 @@
 #include "Animation/AnimInstance.h"
 #include "TimerManager.h"    // 必须包含
 #include "Engine/World.h"    // 确保能正确获取 World
-
+#include "FireBall.h"
 
 // Sets default values
 ATopDownCharacter::ATopDownCharacter()
@@ -71,16 +71,6 @@ void ATopDownCharacter::MoveLeft(float Value)
 	}
 }
 
-void ATopDownCharacter::PrimaryAttack()
-{
-	if (!bIsAttacking) {
-		bIsAttacking = true;
-		// 播放攻击动画
-		PlayAttackAnimation();
-		bIsAttacking = false;
-	}	
-}
-
 void ATopDownCharacter::PlayAttackAnimation()
 {
 	if (AttackMontage) {
@@ -88,6 +78,22 @@ void ATopDownCharacter::PlayAttackAnimation()
 			AnimInstance->StopAllMontages(0.1f); // 0.1秒淡出时间
 		}
 		float dur =PlayAnimMontage(AttackMontage,1);
+		if (dur == 0) {
+			UE_LOG(LogTemp, Warning, TEXT("Playing Montage dur: %d"), dur)
+		}
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("Failed load Montage!"))
+	}
+}
+
+void ATopDownCharacter::PlayAttackAnimation2()
+{
+	if (AttackMontage2) {
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+			AnimInstance->StopAllMontages(0.1f); // 0.1秒淡出时间
+		}
+		float dur = PlayAnimMontage(AttackMontage2, 1);
 		if (dur == 0) {
 			UE_LOG(LogTemp, Warning, TEXT("Playing Montage dur: %d"), dur)
 		}
@@ -131,6 +137,46 @@ void ATopDownCharacter::Dash()
 	}
 }
 
+void ATopDownCharacter::PrimaryAttack()
+{
+	if (!bIsAttacking) {
+		bIsAttacking = true;
+		// 播放攻击动画
+		PlayAttackAnimation();
+		bIsAttacking = false;
+	}
+}
+
+void ATopDownCharacter::SpecialAttack()
+{
+	if (!bIsAttacking) {
+		bIsAttacking = true;
+		if (APlayerController* PC = Cast<APlayerController>(GetController())) {
+			FHitResult HitResult;
+			PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+			if (HitResult.bBlockingHit&&FireBallClass) {
+				FVector CurrentLocation = GetActorLocation();
+				FVector TargetDirection_temp = (HitResult.Location - CurrentLocation);
+				TargetDirection_temp.Z = 0;
+				FVector TargetDirection = TargetDirection_temp.GetSafeNormal();
+				FVector SpawnLocation = CurrentLocation + TargetDirection * FireBallSpawnOffset;
+
+				// 生成火球
+				AFireBall* FireBall = GetWorld()->SpawnActor<AFireBall>(FireBallClass, SpawnLocation, TargetDirection.Rotation());
+				if (FireBall && FireBall->ProjectileMovement)
+				{
+					FireBall->ProjectileMovement->Velocity = TargetDirection * FireBallSpeed;
+				}
+			}
+		}
+		// 播放攻击动画
+		PlayAttackAnimation2();
+		bIsAttacking = false;
+	}
+	
+
+}
+
 // Called every frame
 void ATopDownCharacter::Tick(float DeltaTime)
 {
@@ -166,6 +212,7 @@ void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// 绑定动作输入
 	PlayerInputComponent->BindAction("PrimaryAttack", EInputEvent::IE_Pressed, this, &ATopDownCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("Dash", EInputEvent::IE_Pressed, this, &ATopDownCharacter::Dash);
+	PlayerInputComponent->BindAction("FireSpecialAttack", IE_Pressed, this, &ATopDownCharacter::SpecialAttack);
 
 }
 
