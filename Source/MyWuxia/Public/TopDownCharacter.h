@@ -47,6 +47,15 @@ protected:
 		float FireBallSpawnOffset = 100.0f; // 生成点偏移距离
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 		float FireBallSpeed = 600.0f; // 火球飞行速度
+	//角色属性
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+		float CurrentHealth = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+		float MaxHealth = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+		float CurrentMana = 50.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+		float MaxMana = 50.0f;
 
 
 	bool bCanDash = true;
@@ -58,6 +67,7 @@ protected:
 	void PlayAttackAnimation2();
 	void Dash();
 	void SpecialAttack();
+	void TakeDamage(float DamageAmount);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

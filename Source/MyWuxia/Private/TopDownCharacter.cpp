@@ -177,6 +177,11 @@ void ATopDownCharacter::SpecialAttack()
 
 }
 
+void ATopDownCharacter::TakeDamage(float DamageAmount)
+{
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+}
+
 // Called every frame
 void ATopDownCharacter::Tick(float DeltaTime)
 {
