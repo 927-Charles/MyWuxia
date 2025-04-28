@@ -9,10 +9,17 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/InputComponent.h" 
-#include "Components/SkeletalMeshComponent.h" // 包含 GetMesh() 的头文件
-#include "Components/CapsuleComponent.h"     // 包含 GetCapsuleComponent() 的头文件
+#include "Components/SkeletalMeshComponent.h" 
+#include "Components/CapsuleComponent.h"    
 
-#include "GameFramework/PlayerController.h"  // 提供 APlayerController 的定义
+#include "GameFramework/PlayerController.h" 
+#include "Animation/AnimMontage.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Animation/AnimInstance.h"
+#include "TimerManager.h"    // 必须包含
+#include "Engine/World.h"    // 确保能正确获取 World
+
+
 // Sets default values
 ATopDownCharacter::ATopDownCharacter()
 {
@@ -34,8 +41,7 @@ ATopDownCharacter::ATopDownCharacter()
 
 
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
-
-
+	
 }
 
 // Called when the game starts or when spawned
@@ -67,23 +73,83 @@ void ATopDownCharacter::MoveLeft(float Value)
 
 void ATopDownCharacter::PrimaryAttack()
 {
-	
+	if (!bIsAttacking) {
+		bIsAttacking = true;
+		// 播放攻击动画
+		PlayAttackAnimation();
+		bIsAttacking = false;
+	}	
+}
+
+void ATopDownCharacter::PlayAttackAnimation()
+{
+	if (AttackMontage) {
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+			AnimInstance->StopAllMontages(0.1f); // 0.1秒淡出时间
+		}
+		float dur =PlayAnimMontage(AttackMontage,1);
+		if (dur == 0) {
+			UE_LOG(LogTemp, Warning, TEXT("Playing Montage dur: %d"), dur)
+		}
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("Failed load Montage!"))
+	}
+}
+
+void ATopDownCharacter::Dash()
+{
+	if (!bCanDash)return;
+	if (APlayerController* PC = Cast<APlayerController>(GetController())) {
+		FHitResult HitResult;
+		PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+		if (HitResult.bBlockingHit) {
+			FVector CurrentLocation = GetActorLocation();
+			FVector TargetDirection_temp = (HitResult.Location - CurrentLocation);
+			TargetDirection_temp.Z = 0;
+			FVector TargetDirection = TargetDirection_temp.GetSafeNormal();
+			FVector DashDestination = CurrentLocation + TargetDirection * DashDistance;
+			UE_LOG(LogTemp, Error, TEXT("TargetDirection = %s"), *DashDestination.ToString());
+
+			// 碰撞检测移动
+			FHitResult SweepResult;
+			bool bMoved = SetActorLocation(DashDestination, true, &SweepResult);
+			if (!bMoved&&SweepResult.bBlockingHit) {
+				DashDestination = CurrentLocation + TargetDirection * (DashDistance * SweepResult.Time);
+				SetActorLocation(DashDestination, false);
+			}
+			// 冷却
+			bCanDash = false;
+			GetWorldTimerManager().SetTimer(
+				DashCooldownTimerHandle,
+				[this]() { bCanDash = true; },
+				DashCooldown,
+				false
+			);
+
+		}
+	}
 }
 
 // Called every frame
 void ATopDownCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	  // 持续更新角色朝向鼠标位置
-	if (APlayerController* PC = Cast<APlayerController>(GetController())) {
-		FHitResult HitResult;
-		PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
-		if (HitResult.bBlockingHit) {
-			// 计算看向目标的旋转
-			const FVector Target = HitResult.Location;
-			const FRotator LookAtRotation = (Target - GetActorLocation()).Rotation();
-			// 仅保留Yaw轴
-			SetActorRotation(FRotator(0, LookAtRotation.Yaw, 0));
+	
+	// 持续更新角色朝向鼠标位置
+	// 仅在非攻击状态下更新朝向
+	if (!bIsAttacking)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			FHitResult HitResult;
+			PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+			if (HitResult.bBlockingHit)
+			{
+				const FVector Target = HitResult.Location;
+				const FRotator LookAtRotation = (Target - GetActorLocation()).Rotation();
+				SetActorRotation(FRotator(0, LookAtRotation.Yaw, 0));
+			}
 		}
 	}
 }
@@ -95,8 +161,11 @@ void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// 绑定轴输入
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATopDownCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveLeft", this, &ATopDownCharacter::MoveLeft);
+	
 
 	// 绑定动作输入
-	//PlayerInputComponent->BindAction("普通攻击", EInputEvent::IE_Pressed, this, &ATopDownCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("PrimaryAttack", EInputEvent::IE_Pressed, this, &ATopDownCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("Dash", EInputEvent::IE_Pressed, this, &ATopDownCharacter::Dash);
+
 }
 
