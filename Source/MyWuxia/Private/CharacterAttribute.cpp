@@ -18,14 +18,16 @@ CharacterAttribute::CharacterAttribute(bool RandomData)
 CharacterAttribute::CharacterAttribute(const CharacterAttribute& InCharacterAttribute)
 {
 	this->Health = InCharacterAttribute.Health;
+	this->Magic = InCharacterAttribute.Magic;
 	this->Attack = InCharacterAttribute.Attack;
 	this->Defense = InCharacterAttribute.Defense;
 	this->Speed = InCharacterAttribute.Speed;
 }
 
-CharacterAttribute::CharacterAttribute(int InHealth, int InAttack, int InDefense, int InSpeed)
+CharacterAttribute::CharacterAttribute(int InHealth, int InMagic, int InAttack, int InDefense, int InSpeed)
 {
 	this->Health = InHealth;
+	this->Magic = InMagic;
 	this->Attack = InAttack;
 	this->Defense = InDefense;
 	this->Speed = InSpeed;
